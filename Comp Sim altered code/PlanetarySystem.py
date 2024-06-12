@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from Planet import Planet
+from Planet_old import Planet
 
 
 class PlanetarySystem:

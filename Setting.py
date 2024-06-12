@@ -4,13 +4,15 @@
 # various condensed forms suitable for machine learning
 # Maybe we could also have a Chain class to hold a sequence of settings to have a complete simulation
 
-class Setting:
-    # this represents the time in which the AI will make predictions
-    step = 0.01
+import rebound
+from Planet import Planet
 
-    def __init__(self, g, *planets):
+
+class Setting:
+    def __init__(self, g, step, *planets):
         self.g = g
         self.planets = planets
+        self.step = step
 
     def simulate(self):
         # will use the library to give the "perfect" prediction
