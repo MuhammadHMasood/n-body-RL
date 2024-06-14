@@ -12,10 +12,10 @@ class Planet:
         self.vel = velocity
         self.acc = np.array([0,0])
 
-    def return_particle(self):
+    def get_particle(self):
         return rebound.Particle(m=self.mass, x=self.pos[0], y=self.pos[1], vx=self.vel[0], vy=self.vel[1])
 
-    def return_vector(self, type):
+    def get_vector(self, type):
         match type:
             case "pos_vel":
                 return np.concatenate(self.pos, self.vel)
