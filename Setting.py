@@ -10,24 +10,32 @@ from Planet import Planet
 
 
 class Setting:
-    def __init__(self, g, step, *planets):
+    def __init__(self, g, step, *planets, centered=False, scaled=False, g_removed=False, step_removed=False):
         self.g = g
         self.planets = list(planets)
         self.step = step
+        self.centered = centered
+        self.scaled = scaled
+        self.g_removed = g_removed
+        self.step_removed = step_removed
 
     def simulate(self):
-        # will use the library to give the "perfect" prediction
-        return NotImplemented
+        sim = rebound.Simulation()
+        sim.G = self.g
+        for planet in self.planets:
+            print(planet)
+            print(type(planet),"\n")
+        sim.add(self.get_particles())
+        sim.integrate(self.step)
+
+        planets = [Planet.load_particle(particle) for particle in sim.particles]
+        return Setting(self.g, self.step, planets)
+
 
     def get_vector(self, reduction_type="none", vector_type="pos_vel"):
         # will return the input vector with the maximum dimensional reduction
         match reduction_type:
             case "none":
-                sim = rebound.Simulation()
-                sim.G = self.g
-                sim.add([planet.get_particle() for planet in self.planets])
-                sim.integrate(1)
-                print(sim.particles[0], sim.particles[1])
                 return NotImplemented
 
             case "partial":
@@ -36,10 +44,49 @@ class Setting:
             case "full":
                 return NotImplemented
 
+    def get_planets(self):
+        new_list = []
+        for planet in self.planets:
+            new_list.append(planet.copy())
+        return new_list
+    
+    def reduce(self, centered=False, scaled=False, g_removed=False, step_removed=False):
+        new_planets = self.get_planets()
+        step = self.step
+        g = self.g
+        if centered:
+            new_planets = self.reduce_center(new_planets)
+        if scaled:
+            new_planets = self.reduce_scale_orientation(new_planets)
+        if g_removed:
+            new_planets = self.reduce_g(new_planets)
+            g = 1
+        if step_removed:
+            new_planets = self.reduce_step(new_planets)
+            step = 1
+        
+        return Setting(g, step, new_planets, centered=centered, scaled=scaled, g_removed=g_removed, step_removed=step_removed)
+    
+    def reintroduce(self, setting):
+        new_planets = setting.get_planets()
+
+        if setting.centered:
+            new_planets = self.reintroduce_center(new_planets)
+        if setting.scaled:
+            new_planets = self.reintroduce_scale_orientation(new_planets)
+        if setting.g_reduced:
+            new_planets = self.reintroduce_g(new_planets)
+        if setting.step_reduced:
+            new_planets = self.reintroduce_step(new_planets)
+        
+        return Setting(self.g, self.step, new_planets)
+
+
+
     def reduce_center(self, planets):
-        momentum = np.array([0, 0])
+        momentum = np.array([0., 0.])
         mass = 0
-        position = np.array([0, 0])
+        position = np.array([0., 0.])
         for planet in planets:
             momentum += planet.mass * planet.vel
             mass += planet.mass
@@ -53,9 +100,9 @@ class Setting:
 
 
     def reintroduce_center(self, planets):
-        momentum = np.array([0, 0])
+        momentum = np.array([0., 0.])
         mass = 0
-        position = np.array([0, 0])
+        position = np.array([0., 0.])
         for planet in self.planets:
             momentum += planet.mass * planet.vel
             mass += planet.mass
@@ -126,21 +173,20 @@ class Setting:
             planet.mass *= det_squared
 
         return planets
+    
+    def get_particles(self):
+        return [planet.get_particle() for planet in self.planets]
 
 
     def __repr__(self):
         return str(self.planets)
+        
 
 
-    def get_list(self):
-        new_list = []
-        for planet in self.planets:
-            new_list.append(planet.copy())
-        return new_list
 
 
-planet1 = Planet(1, np.array([1, 1]), np.array([0, 1]))
-planet2 = Planet(1, np.array([-1, -1]), np.array([0, -1]))
+planet1 = Planet(1, np.array([1., 1.]), np.array([0., 1.]))
+planet2 = Planet(1, np.array([-1., -1.]), np.array([0., -1.]))
 setting = Setting(1, 1, planet1, planet2)
 """""
 new_planets = setting.reduce_scale_orientation(setting.get_list())
@@ -149,4 +195,6 @@ print(new_planets)
 print(setting.planets)
 print(new_planets)
 """""
-setting.get_vector()
+print(setting.simulate())
+new_setting = setting.reduce(centered=True)
+print(setting.reintroduce(new_setting.simulate()))

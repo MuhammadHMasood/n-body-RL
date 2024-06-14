@@ -32,4 +32,10 @@ class Planet:
         new_planet = Planet(self.mass, self.pos.copy(), self.vel.copy())
         new_planet.acc = self.acc.copy()
         return new_planet
+    
+    def load_particle(particle):
+        pos = np.array([particle.x, particle.y])
+        vel = np.array([particle.vx, particle.vy])
+        mass = particle.m
+        return Planet(mass, pos, vel)
 
