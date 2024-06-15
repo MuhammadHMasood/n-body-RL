@@ -10,7 +10,7 @@ from Planet import Planet
 
 
 class Setting:
-    def __init__(self, g, step, *planets, centered=False, scaled=False, g_removed=False, step_removed=False):
+    def __init__(self, *planets, g=1, step=1, centered=False, scaled=False, g_removed=False, step_removed=False):
         self.g = g
         self.planets = list(planets)
         self.step = step
@@ -22,14 +22,13 @@ class Setting:
     def simulate(self):
         sim = rebound.Simulation()
         sim.G = self.g
-        for planet in self.planets:
-            print(planet)
-            print(type(planet),"\n")
+        # sim.units = ('m', 's', 'kg')
+        sim.units = ('yr', 'AU', 'Msun')
         sim.add(self.get_particles())
         sim.integrate(self.step)
 
         planets = [Planet.load_particle(particle) for particle in sim.particles]
-        return Setting(self.g, self.step, planets)
+        return Setting(*planets, g=self.g, step=self.step, scaled=self.scaled, centered=self.centered, g_removed=self.g_removed, step_removed=self.step_removed)
 
 
     def get_vector(self, reduction_type="none", vector_type="pos_vel"):
@@ -51,6 +50,7 @@ class Setting:
         return new_list
     
     def reduce(self, centered=False, scaled=False, g_removed=False, step_removed=False):
+
         new_planets = self.get_planets()
         step = self.step
         g = self.g
@@ -64,8 +64,7 @@ class Setting:
         if step_removed:
             new_planets = self.reduce_step(new_planets)
             step = 1
-        
-        return Setting(g, step, new_planets, centered=centered, scaled=scaled, g_removed=g_removed, step_removed=step_removed)
+        return Setting(*new_planets, g=self.g, step=self.step, centered=centered, scaled=scaled, g_removed=g_removed, step_removed=step_removed)
     
     def reintroduce(self, setting):
         new_planets = setting.get_planets()
@@ -74,12 +73,12 @@ class Setting:
             new_planets = self.reintroduce_center(new_planets)
         if setting.scaled:
             new_planets = self.reintroduce_scale_orientation(new_planets)
-        if setting.g_reduced:
+        if setting.g_removed:
             new_planets = self.reintroduce_g(new_planets)
-        if setting.step_reduced:
+        if setting.step_removed:
             new_planets = self.reintroduce_step(new_planets)
         
-        return Setting(self.g, self.step, new_planets)
+        return Setting(*new_planets, g=self.g, step=self.step)
 
 
 
@@ -116,16 +115,14 @@ class Setting:
 
 
     def reduce_g(self, planets):
-        sqrt_g = np.sqrt(self.g)
         for planet in planets:
-            planet.mass *= sqrt_g
+            planet.mass *= self.g
         return planets
 
 
     def reintroduce_g(self, planets):
-        sqrt_g = np.sqrt(self.g)
         for planet in planets:
-            planet.mass /= sqrt_g
+            planet.mass /= self.g
         return planets
 
 
@@ -156,7 +153,7 @@ class Setting:
         for planet in planets:
             planet.pos = matrix.dot(planet.pos)
             planet.vel = matrix.dot(planet.vel)
-            planet.mass /= det
+            planet.mass *= det**(3/2)
 
         return planets
 
@@ -165,12 +162,12 @@ class Setting:
         matrix = np.array([[self.planets[0].pos[0], -self.planets[0].pos[1]],
                         [self.planets[0].pos[1], self.planets[0].pos[0]]])
 
-        det_squared = np.linalg.det(matrix)
+        det = np.linalg.det(matrix)
 
         for planet in planets:
             planet.pos = matrix.dot(planet.pos)
             planet.vel = matrix.dot(planet.vel)
-            planet.mass *= det_squared
+            planet.mass *= det**(3/2)
 
         return planets
     
@@ -187,7 +184,7 @@ class Setting:
 
 planet1 = Planet(1, np.array([1., 1.]), np.array([0., 1.]))
 planet2 = Planet(1, np.array([-1., -1.]), np.array([0., -1.]))
-setting = Setting(1, 1, planet1, planet2)
+setting = Setting(planet1, planet2, g=4)
 """""
 new_planets = setting.reduce_scale_orientation(setting.get_list())
 
@@ -195,6 +192,17 @@ print(new_planets)
 print(setting.planets)
 print(new_planets)
 """""
-print(setting.simulate())
-new_setting = setting.reduce(centered=True)
+"""""
+print("\n", setting)
+print(setting.simulate(), "\n")
+new_setting = setting.reduce(scaled=True)
+print(setting.reintroduce(new_setting))
+print(new_setting)
+print(setting.reintroduce(new_setting.simulate()))
+"""""
+print("\n", setting)
+print(setting.simulate(), "\n")
+new_setting = setting.reduce(scaled=True)
+print(setting.reintroduce(new_setting))
+print(new_setting)
 print(setting.reintroduce(new_setting.simulate()))
