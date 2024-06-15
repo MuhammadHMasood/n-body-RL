@@ -1,21 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from Planet_old import Planet
+from Planet_old import Planet_old
 
 
-class PlanetarySystem:
+class PlanetarySystem_old:
     """
     represents the solar systems, handles simulation and animation
     """
-    def __init__(self, m_vec, pos_mat, vel_mat, limit, step, filename_write="energy.txt", integrator="beeman"):
-        m1 = m_vec[0]
-        m2 = m_vec[1]
-        m3 = m_vec[2]
-        pos1 = pos_mat[0]
-        pos2 = pos_mat[1]
-        vel1 = vel_mat[0]
-        vel2 = vel_mat[1]
+    def __init__(self, planets, g, limit, step, integrator="beeman"):
 
         # simulation parameters
         self.limit = limit  # the maximum number of iteration
@@ -23,42 +16,7 @@ class PlanetarySystem:
         self.g = 1  # the graviational constant
 
         # list for planets
-        self.planets = []
-
-        self.planets.append(Planet(m1, pos1, vel1, name="one", colour="b"))
-        self.planets.append(Planet(m2, pos2, vel2, name="two", colour="g"))
-        self.planets.append(Planet(m3, -(m1*pos1 + m2*pos2), -(m1*vel1 + m2*vel2), name="three", colour="r"))
-
-        self.energy_history = []  # will store the total energy of the system in each timestep
-        self.total_time = 0  # stores the total time
-        self.potential_energy = 0  # stores the potential energy
-
-        # selects the appropriate type of integration based on the input
-        if integrator == "beeman":
-            self.perform_step = getattr(self, "perform_step_beeman")
-        elif integrator == "euler":
-            self.perform_step = getattr(self, "perform_step_euler")
-
-    def __init__2(self, m_vec, pos1, vel_mat, limit, step, g, filename_write="energy.txt", integrator="beeman"):
-        m1 = m_vec[0]
-        m2 = m_vec[1]
-        pos2 = np.array([1., 0.])
-        vel1 = vel_mat[0]
-        vel2 = vel_mat[1]
-
-        # simulation parameters
-        self.limit = limit  # the maximum number of iteration
-        self.step = step  # the duration of one timestep
-        self.g = g  # the graviational constant
-
-        # list for planets
-        self.planets = []
-
-        self.planets.append(Planet(m1, pos1, vel1, name="one", colour="b"))
-        self.planets.append(Planet(m2, pos2, vel2, name="two", colour="g"))
-        self.planets.append(Planet(1, -(m1*pos1 + m2*pos2), -(m1*vel1 + m2*vel2), name="three", colour="r"))
-
-        self.energy_history = []  # will store the total energy of the system in each timestep
+        self.planets = planets
         self.total_time = 0  # stores the total time
         self.potential_energy = 0  # stores the potential energy
 
@@ -98,9 +56,6 @@ class PlanetarySystem:
             planet.update_velocity_beeman(self.step)
             print(planet.pos)
 
-        # the total energy is stored
-        self.energy_history.append(self.get_total_energy())
-
         self.total_time += self.step
 
     def perform_step_euler(self):
@@ -115,7 +70,6 @@ class PlanetarySystem:
             planet.update_euler(self.step)
 
         # the total energy is stored
-        self.energy_history.append(self.get_total_energy())
 
         self.total_time += self.step
 
@@ -161,7 +115,8 @@ class PlanetarySystem:
         self.patches = []
 
         for planet in self.planets:
-            self.patches.append(plt.Circle(planet.pos, max_orb * 0.02, color=planet.colour, animated=True))
+            print(planet)
+            self.patches.append(plt.Circle(planet.pos, max_orb * 0.02, animated=True))
 
         # create plot elements
         plt.style.use('dark_background')
@@ -178,7 +133,7 @@ class PlanetarySystem:
         ax.set_ylim(-lim, lim)
 
         # create the animator
-        self.anim = FuncAnimation(fig, self.animate, frames=self.limit, repeat=False, interval=5, blit=True)
+        self.anim = FuncAnimation(fig, self.animate, frames=self.limit, repeat=False, interval=10, blit=True)
 
         # initialization of beeman integration
         self.update_forces()
@@ -199,55 +154,8 @@ class PlanetarySystem:
         for i, v in enumerate(self.planets):
             self.patches[i].center = v.pos
 
-        self.energy_history.append(self.get_total_energy())
 
         return self.patches
-
-    def display_energy_graph(self):
-        """
-        generates a graph of the energy history of the system
-        """
-        skip = 1
-        plt.style.use("default")
-        x_values = np.linspace(0, self.total_time, num=len(self.energy_history))
-        plt.ylabel("Total energy (joules)")
-        plt.xlabel("Time elapsed (earth years)")
-        plt.title("Energy vs Time Euler (timestep=0.001)")
-        plt.plot(x_values[::skip], self.energy_history[::skip])
-        plt.show()
-
-    def print_energy_stats(self):
-        """
-        prints the average energy of the system and the associated deviation
-        """
-        mean = sum(self.energy_history) / len(self.energy_history)
-        variance = 0
-        for energy in self.energy_history:
-            variance += (energy - mean)**2
-
-        variance = variance / len(self.energy_history)
-        deviation = np.sqrt(variance)
-        print(f"The mean energy was {mean} Joules with a standard deviation of {deviation} Joules")
-
-    def get_kinetic_energy(self):
-        """
-        returns the kinetic energy of the system
-        """
-        kin_en = 0
-        for i in self.planets:
-            kin_en += i.get_kinetic_energy()
-        return kin_en
-
-    def get_total_energy(self):
-        """
-        returns the total energy of the system in joules
-        """
-        # need to convert from earth masses AU^2 yr^-2 to kg m^2 s-2 (J)
-        # 1 earth mass = 5.97219e24 kg
-        # 1 AU = 1.496e+11 m
-        # c = (5.97219e+24 * 1.496e+11 * 1.496e+11) / (3.154e+7 * 3.154e+7)
-        # return c * (self.get_kinetic_energy() + self.potential_energy)
-        return self.get_kinetic_energy() + self.potential_energy
 
     def simulate_to_file(self, filename):
         """
@@ -304,7 +212,7 @@ class PlanetarySystem:
 
         self.patches = []
 
-        max_orb = 10
+        max_orb = 6
 
         # initializes the patches
         for i in range(0, len(inputdata[0])):
@@ -349,4 +257,3 @@ class PlanetarySystem:
             v.center = self.positions_from_file[i][j]
 
         return self.patches
-

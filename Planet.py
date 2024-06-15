@@ -1,5 +1,6 @@
 import numpy as np
 import rebound
+from Planet_old import Planet_old
 
 
 class Planet:
@@ -23,10 +24,10 @@ class Planet:
                 return np.concatenate(self.pos, self.vel, self.acc)
 
     def __repr__(self):
-        return f"pos={self.pos}, vel={self.vel}"
+        return f"|Planet with mass={self.mass}, pos={self.pos}, vel={self.vel}|"
 
     def __str__(self):
-        return f"pos={self.pos}, vel={self.vel}"
+        return f"|Planet with mass={self.mass}, pos={self.pos}, vel={self.vel}|"
 
     def copy(self):
         new_planet = Planet(self.mass, self.pos.copy(), self.vel.copy())
@@ -38,4 +39,10 @@ class Planet:
         vel = np.array([particle.vx, particle.vy])
         mass = particle.m
         return Planet(mass, pos, vel)
+    
+    def get_planet_old(self):
+        return Planet_old(self.mass, self.pos.copy(), self.vel.copy())
+    
+    def load_planet_old(planet_old):
+        return Planet(planet_old.mass, planet_old.pos.copy(), planet_old.vel.copy())
 

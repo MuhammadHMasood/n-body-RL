@@ -7,6 +7,9 @@
 import rebound
 import numpy as np
 from Planet import Planet
+from Planet_old import Planet_old
+from PlanetarySystem_old import PlanetarySystem_old
+
 
 
 class Setting:
@@ -24,11 +27,21 @@ class Setting:
         sim.G = self.g
         # sim.units = ('m', 's', 'kg')
         sim.units = ('yr', 'AU', 'Msun')
+        sim.integrator = "leapfrog"
         sim.add(self.get_particles())
+        op = rebound.OrbitPlot(sim)
+        op.fig.savefig("orbit3.png")
         sim.integrate(self.step)
+        
 
         planets = [Planet.load_particle(particle) for particle in sim.particles]
         return Setting(*planets, g=self.g, step=self.step, scaled=self.scaled, centered=self.centered, g_removed=self.g_removed, step_removed=self.step_removed)
+    
+    def simulate_old(self):
+        planets_old = [planet.get_planet_old() for planet in self.planets]
+        a = 100
+        sim = PlanetarySystem_old(planets_old, self.g, a * self.step, 1/a)
+        sim.run_animation()
 
 
     def get_vector(self, reduction_type="none", vector_type="pos_vel"):
@@ -64,7 +77,7 @@ class Setting:
         if step_removed:
             new_planets = self.reduce_step(new_planets)
             step = 1
-        return Setting(*new_planets, g=self.g, step=self.step, centered=centered, scaled=scaled, g_removed=g_removed, step_removed=step_removed)
+        return Setting(*new_planets, g=g, step=step, centered=centered, scaled=scaled, g_removed=g_removed, step_removed=step_removed)
     
     def reintroduce(self, setting):
         new_planets = setting.get_planets()
@@ -178,31 +191,3 @@ class Setting:
     def __repr__(self):
         return str(self.planets)
         
-
-
-
-
-planet1 = Planet(1, np.array([1., 1.]), np.array([0., 1.]))
-planet2 = Planet(1, np.array([-1., -1.]), np.array([0., -1.]))
-setting = Setting(planet1, planet2, g=4)
-"""""
-new_planets = setting.reduce_scale_orientation(setting.get_list())
-
-print(new_planets)
-print(setting.planets)
-print(new_planets)
-"""""
-"""""
-print("\n", setting)
-print(setting.simulate(), "\n")
-new_setting = setting.reduce(scaled=True)
-print(setting.reintroduce(new_setting))
-print(new_setting)
-print(setting.reintroduce(new_setting.simulate()))
-"""""
-print("\n", setting)
-print(setting.simulate(), "\n")
-new_setting = setting.reduce(scaled=True)
-print(setting.reintroduce(new_setting))
-print(new_setting)
-print(setting.reintroduce(new_setting.simulate()))

@@ -1,20 +1,18 @@
 import numpy as np
 
 
-class Planet:
+class Planet_old:
     """
     represents a planet that affects other with its gravity and is affected by the gravity of others
     """
-    def __init__(self, mass, position, velocity, name="unnamed", colour=(0, 0, 0)):
+    def __init__(self, mass, position, velocity):
         self.mass = mass
         self.pos = position
         self.pos_old = position
         self.vel = velocity
-        self.name = name
         self.acc = 0
         self.acc_old = 0
         self.force = 0
-        self.colour = colour
         self.potential = 0
 
     def update_euler(self, time_step):
@@ -54,8 +52,10 @@ class Planet:
         return self.mass * np.dot(self.vel, self.vel) / 2
 
     def __str__(self):
-        # return f"{self.name} at {self.pos}, with speed {self.vel} and velocity {self.vel}"
-        return self.name
+        return f"Planet at {self.pos}, with speed {self.vel} and velocity {self.vel}"
+    
+    def __repr__(self):
+        return f"Planet at {self.pos}, with speed {self.vel} and velocity {self.vel}"
 
     def add_force(self, force):
         """
