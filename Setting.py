@@ -39,9 +39,11 @@ class Setting:
     
     def simulate_old(self):
         planets_old = [planet.get_planet_old() for planet in self.planets]
-        a = 100
+        a = 2000
         sim = PlanetarySystem_old(planets_old, self.g, a * self.step, 1/a)
-        sim.run_animation()
+        new_planets_old = sim.run_simulation()
+        new_planets = [Planet.load_planet_old(planet_old) for planet_old in new_planets_old]
+        return Setting(*new_planets, g=self.g, step=self.step, scaled=self.scaled, centered=self.centered, g_removed=self.g_removed, step_removed=self.step_removed)
 
 
     def get_vector(self, reduction_type="none", vector_type="pos_vel"):
@@ -143,7 +145,7 @@ class Setting:
         sqrt_step = np.sqrt(self.step)
         for planet in planets:
             planet.vel *= self.step
-            planet.mass *= sqrt_step
+            planet.mass *= self.step**2
         return planets
 
 
@@ -151,7 +153,7 @@ class Setting:
         sqrt_step = np.sqrt(self.step)
         for planet in planets:
             planet.vel /= self.step
-            planet.mass /= sqrt_step
+            planet.mass /= self.step**2
         return planets
 
 
@@ -166,7 +168,7 @@ class Setting:
         for planet in planets:
             planet.pos = matrix.dot(planet.pos)
             planet.vel = matrix.dot(planet.vel)
-            planet.mass *= det**(3/2)
+            planet.mass /= det**(3/2)
 
         return planets
 
@@ -190,4 +192,3 @@ class Setting:
 
     def __repr__(self):
         return str(self.planets)
-        

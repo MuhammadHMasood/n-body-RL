@@ -13,7 +13,7 @@ class PlanetarySystem_old:
         # simulation parameters
         self.limit = limit  # the maximum number of iteration
         self.step = step  # the duration of one timestep
-        self.g = 1  # the graviational constant
+        self.g = g  # the graviational constant
 
         # list for planets
         self.planets = planets
@@ -39,6 +39,8 @@ class PlanetarySystem_old:
         # runs the simulation for the specified time
         while self.total_time < self.limit * self.step:
             self.perform_step()
+        
+        return self.planets
 
     def perform_step_beeman(self):
         """
@@ -54,7 +56,6 @@ class PlanetarySystem_old:
         self.update_forces()
         for planet in self.planets:
             planet.update_velocity_beeman(self.step)
-            print(planet.pos)
 
         self.total_time += self.step
 
