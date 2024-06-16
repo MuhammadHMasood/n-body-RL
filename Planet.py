@@ -18,10 +18,10 @@ class Planet:
 
     def get_vector(self, type):
         match type:
-            case "pos_vel":
-                return np.concatenate(self.pos, self.vel)
-            case "pos_vel_acc":
-                return np.concatenate(self.pos, self.vel, self.acc)
+            case "m_pos_vel":
+                return np.concatenate([self.mass], self.pos, self.vel)
+            case "m_pos_vel_acc":
+                return np.concatenate([self.mass],self.pos, self.vel, self.acc)
 
     def __repr__(self):
         return f"|Planet with mass={self.mass}, pos={self.pos}, vel={self.vel}|"

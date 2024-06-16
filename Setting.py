@@ -46,17 +46,31 @@ class Setting:
         return Setting(*new_planets, g=self.g, step=self.step, scaled=self.scaled, centered=self.centered, g_removed=self.g_removed, step_removed=self.step_removed)
 
 
-    def get_vector(self, reduction_type="none", vector_type="pos_vel"):
+    def get_vector(self, reduction_type="none", vector_type="m_pos_vel"):
         # will return the input vector with the maximum dimensional reduction
         match reduction_type:
             case "none":
-                return NotImplemented
+                vector = np.array([self.g, self.step])
+                for planet in self.planets:
+                    vector = np.concatenate(vector, planet.get_vector(vector_type))
+                return vector
 
             case "partial":
-                return NotImplemented
+                if not self.g_removed or not self.step_removed:
+                    return ValueError
+                vector = np.array([])
+                for planet in self.planets:
+                    vector = np.concatenate(vector, planet.get_vector(vector_type))
+                return vector
+
 
             case "full":
-                return NotImplemented
+                if not self.g_removed or not self.step_removed or not self.scaled or not self.centered:
+                    return ValueError
+                vector = np.array([self.planets[0].mass, self.planets[1].mass])
+                for planet in self.planets[2:]:
+                    vector = np.concatenate(vector, planet.get_vector(vector_type))
+                return vector
 
     def get_planets(self):
         new_list = []
@@ -197,7 +211,7 @@ class Setting:
             momentum += planet.mass * planet.vel
             mass += planet.mass
             position += planet.mass * planet.pos
-
+        
         pos = self.planets[0].pos - position / mass
 
 
@@ -213,7 +227,7 @@ class Setting:
         
         for planet in planets:
             planet.vel += momentum / mass
-            planet.pos += position / mass
+            planet.pos += position / mass + self.step * momentum / mass
 
         return planets
     
