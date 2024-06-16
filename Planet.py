@@ -45,4 +45,10 @@ class Planet:
     
     def load_planet_old(planet_old):
         return Planet(planet_old.mass, planet_old.pos.copy(), planet_old.vel.copy())
+    
+    def get_random():
+        pos = 4 * np.random.rand(2)
+        vel = 4 * np.random.rand(2)
+        mass = 4 * np.random.random()
+        return Planet(mass, pos, vel)
 

@@ -4,6 +4,7 @@ import numpy as np
 
 
 def main():
+    """""
     # planet1 = Planet(1, np.array([1., 1.]), np.array([0., 1.]))
     # planet2 = Planet(1, np.array([-1., -1.]), np.array([0., -1.]))
     planet1 = Planet(1, np.array([1., 1.]), np.array([1., 0.]))
@@ -12,13 +13,23 @@ def main():
 
     print("\n", setting)
     print(setting.simulate_old(), "\n")
-    new_setting = setting.reduce()   
+    new_setting = setting.reduce(centered=True, scaled=True, g_removed=True, step_removed=True)   
     
     # print(new_setting)
     # print(setting.reintroduce(new_setting), "\n")
     a = new_setting.simulate_old()
     print(a)
     print(setting.reintroduce(a), "\n")
+    """""
+    setting = Setting.generate_instance("none", 3)
+    print(setting.simulate_old(), "\n")
+    new_setting = setting.reduce(centered=True, scaled=True, g_removed=True, step_removed=True)
+    # print(new_setting, "\n")
+    a = new_setting.simulate_old()
+    # print(a)
+    print(setting.reintroduce(a), "\n")
+
+
 
 
 if __name__=="__main__":

@@ -39,7 +39,7 @@ class Setting:
     
     def simulate_old(self):
         planets_old = [planet.get_planet_old() for planet in self.planets]
-        a = 2000
+        a = 5000
         sim = PlanetarySystem_old(planets_old, self.g, a * self.step, 1/a)
         new_planets_old = sim.run_simulation()
         new_planets = [Planet.load_planet_old(planet_old) for planet_old in new_planets_old]
@@ -85,8 +85,11 @@ class Setting:
         new_planets = setting.get_planets()
 
         if setting.centered:
-            new_planets = self.reintroduce_center(new_planets)
-        if setting.scaled:
+            if setting.scaled:
+                new_planets = self.reintroduce_scale_orientation_center(new_planets)
+            else:
+                new_planets = self.reintroduce_center(new_planets)
+        elif setting.scaled:
             new_planets = self.reintroduce_scale_orientation(new_planets)
         if setting.g_removed:
             new_planets = self.reintroduce_g(new_planets)
@@ -186,9 +189,46 @@ class Setting:
 
         return planets
     
+    def reintroduce_scale_orientation_center(self, planets):
+        momentum = np.array([0., 0.])
+        mass = 0
+        position = np.array([0., 0.])
+        for planet in self.planets:
+            momentum += planet.mass * planet.vel
+            mass += planet.mass
+            position += planet.mass * planet.pos
+
+        pos = self.planets[0].pos - position / mass
+
+
+        matrix = np.array([[pos[0], -pos[1]],
+                        [pos[1], pos[0]]])
+
+        det = np.linalg.det(matrix)
+
+        for planet in planets:
+            planet.pos = matrix.dot(planet.pos)
+            planet.vel = matrix.dot(planet.vel)
+            planet.mass *= det**(3/2)
+        
+        for planet in planets:
+            planet.vel += momentum / mass
+            planet.pos += position / mass
+
+        return planets
+    
     def get_particles(self):
         return [planet.get_particle() for planet in self.planets]
 
 
     def __repr__(self):
         return str(self.planets)
+    
+    def generate_instance(type, planet_num):
+        match type:
+            case "none":
+                g = 2 * np.random.random()
+                step = np.random.random()/2 + 1
+                # step = 1
+                planets = [Planet.get_random() for i in range(planet_num)]
+                return Setting(*planets, g=g, step=step)
