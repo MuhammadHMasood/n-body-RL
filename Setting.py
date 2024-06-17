@@ -68,9 +68,16 @@ class Setting:
                 if not self.g_removed or not self.step_removed or not self.scaled or not self.centered:
                     return ValueError
                 vector = np.array([self.planets[0].mass, self.planets[1].mass])
+                vector = np.concatenate(vector, self.planets[0].vel)
                 for planet in self.planets[2:]:
                     vector = np.concatenate(vector, planet.get_vector(vector_type))
                 return vector
+            
+    def get_vector_pair(self, reduction_type="none", vector_type="m_pos_vel"):
+        initial_state = self.get_vector(reduction_type=reduction_type, vector_type=vector_type)
+        new_setting = self.simulate_old()
+        final_state = Setting.planets_to_vector(new_setting.planets)
+        return initial_state, final_state
 
     def get_planets(self):
         new_list = []
@@ -246,3 +253,27 @@ class Setting:
                 # step = 1
                 planets = [Planet.get_random() for i in range(planet_num)]
                 return Setting(*planets, g=g, step=step)
+            
+            case "partial":
+                planets = [Planet.get_random() for i in range(planet_num)]
+                return Setting(*planets)
+            
+            case "full":
+                planets = [Planet.get_random() for i in range(planet_num - 1)]
+                planets[0].pos = np.array([1, 0])
+                mass = 4 * np.random.random()
+
+                momentum = np.array([0., 0.])
+                position = np.array([0., 0.])
+                for planet in planets:
+                    momentum += planet.mass * planet.vel
+                    position += planet.mass * planet.pos
+
+                planets.append(Planet(mass, -position/mass, -momentum/mass))
+                return Setting(*planets)
+            
+    def planets_to_vector(planets, vector_type="m_pos_vel"):
+        vector = np.array([])
+        for planet in planets:
+            vector = np.concatenate(vector, planet.get_vector(vector_type))
+        return vector
