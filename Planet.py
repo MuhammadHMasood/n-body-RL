@@ -19,7 +19,7 @@ class Planet:
     def get_vector(self, type):
         match type:
             case "m_pos_vel":
-                return np.concatenate([self.mass], self.pos, self.vel)
+                return np.concatenate(([self.mass], self.pos, self.vel))
             case "m_pos_vel_acc":
                 return np.concatenate([self.mass],self.pos, self.vel, self.acc)
 
@@ -47,8 +47,8 @@ class Planet:
         return Planet(planet_old.mass, planet_old.pos.copy(), planet_old.vel.copy())
     
     def get_random():
-        pos = 4 * np.random.rand(2)
-        vel = 4 * np.random.rand(2)
-        mass = 4 * np.random.random()
+        pos = 10 * np.random.rand(2)
+        vel = 10 * np.random.rand(2)
+        mass = 10 * np.random.random()
         return Planet(mass, pos, vel)
 

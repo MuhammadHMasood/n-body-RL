@@ -26,11 +26,11 @@ class Setting:
         sim = rebound.Simulation()
         sim.G = self.g
         # sim.units = ('m', 's', 'kg')
-        sim.units = ('yr', 'AU', 'Msun')
+        # sim.units = ('yr', 'AU', 'Msun')
         sim.integrator = "leapfrog"
         sim.add(self.get_particles())
-        op = rebound.OrbitPlot(sim)
-        op.fig.savefig("orbit3.png")
+        # op = rebound.OrbitPlot(sim)
+        # op.fig.savefig("orbit3.png")
         sim.integrate(self.step)
         
 
@@ -39,7 +39,7 @@ class Setting:
     
     def simulate_old(self):
         planets_old = [planet.get_planet_old() for planet in self.planets]
-        a = 5000
+        a = 1000
         sim = PlanetarySystem_old(planets_old, self.g, a * self.step, 1/a)
         new_planets_old = sim.run_simulation()
         new_planets = [Planet.load_planet_old(planet_old) for planet_old in new_planets_old]
@@ -52,7 +52,7 @@ class Setting:
             case "none":
                 vector = np.array([self.g, self.step])
                 for planet in self.planets:
-                    vector = np.concatenate(vector, planet.get_vector(vector_type))
+                    vector = np.concatenate((vector, planet.get_vector(vector_type)))
                 return vector
 
             case "partial":
@@ -60,7 +60,8 @@ class Setting:
                     return ValueError
                 vector = np.array([])
                 for planet in self.planets:
-                    vector = np.concatenate(vector, planet.get_vector(vector_type))
+                    vector = np.concatenate((vector, planet.get_vector(vector_type)))
+                print(vector)
                 return vector
 
 
@@ -68,14 +69,14 @@ class Setting:
                 if not self.g_removed or not self.step_removed or not self.scaled or not self.centered:
                     return ValueError
                 vector = np.array([self.planets[0].mass, self.planets[1].mass])
-                vector = np.concatenate(vector, self.planets[0].vel)
+                vector = np.concatenate((vector, self.planets[0].vel))
                 for planet in self.planets[2:]:
-                    vector = np.concatenate(vector, planet.get_vector(vector_type))
+                    vector = np.concatenate((vector, planet.get_vector(vector_type)))
                 return vector
             
     def get_vector_pair(self, reduction_type="none", vector_type="m_pos_vel"):
         initial_state = self.get_vector(reduction_type=reduction_type, vector_type=vector_type)
-        new_setting = self.simulate_old()
+        new_setting = self.simulate()
         final_state = Setting.planets_to_vector(new_setting.planets)
         return initial_state, final_state
 
@@ -104,7 +105,9 @@ class Setting:
     
     def reintroduce(self, setting):
         new_planets = setting.get_planets()
-
+        
+        if setting.step_removed:
+            new_planets = self.reintroduce_step(new_planets)
         if setting.centered:
             if setting.scaled:
                 new_planets = self.reintroduce_scale_orientation_center(new_planets)
@@ -114,8 +117,6 @@ class Setting:
             new_planets = self.reintroduce_scale_orientation(new_planets)
         if setting.g_removed:
             new_planets = self.reintroduce_g(new_planets)
-        if setting.step_removed:
-            new_planets = self.reintroduce_step(new_planets)
         
         return Setting(*new_planets, g=self.g, step=self.step)
 
@@ -169,7 +170,7 @@ class Setting:
         sqrt_step = np.sqrt(self.step)
         for planet in planets:
             planet.vel *= self.step
-            planet.mass *= self.step**2
+            planet.mass *= self.step**(2)
         return planets
 
 
@@ -249,14 +250,15 @@ class Setting:
         match type:
             case "none":
                 g = 2 * np.random.random()
-                step = np.random.random()/2 + 1
+                step = -np.random.random()/2 + 1
                 # step = 1
+                print(step)
                 planets = [Planet.get_random() for i in range(planet_num)]
                 return Setting(*planets, g=g, step=step)
             
             case "partial":
                 planets = [Planet.get_random() for i in range(planet_num)]
-                return Setting(*planets)
+                return Setting(*planets, g_removed=True, step_removed=True)
             
             case "full":
                 planets = [Planet.get_random() for i in range(planet_num - 1)]
@@ -270,10 +272,10 @@ class Setting:
                     position += planet.mass * planet.pos
 
                 planets.append(Planet(mass, -position/mass, -momentum/mass))
-                return Setting(*planets)
+                return Setting(*planets, centered=True, scaled=True, g_removed=True, step_removed=True)
             
     def planets_to_vector(planets, vector_type="m_pos_vel"):
         vector = np.array([])
         for planet in planets:
-            vector = np.concatenate(vector, planet.get_vector(vector_type))
+            vector = np.concatenate((vector, planet.get_vector(vector_type)))
         return vector
