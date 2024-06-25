@@ -5,7 +5,7 @@ import time
 
 class Generator:
     def __init__(self):
-        pass
+        self.a = np.random.random
 
     def generate(self, number, planet_num, type):
         setting = Setting.generate_instance(type, planet_num)
@@ -21,14 +21,15 @@ class Generator:
 
         return initial, final
 
-generator = Generator()
+if __name__ == "__main__":
+    generator = Generator()
 
-start = time.time()
+    start = time.time()
 
-a, b = generator.generate(1000, 3, "full")
+    a, b = generator.generate(10, 2, "full")
+    print(a.shape, b.shape)
+    end = time.time()
 
-end = time.time()
-
-print(a, "\n")
-print(b)
-print(end - start)
+    print(a, "\n")
+    print(b)
+    print(end - start)

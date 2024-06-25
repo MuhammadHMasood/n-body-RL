@@ -27,7 +27,7 @@ class Setting:
         sim.G = self.g
         # sim.units = ('m', 's', 'kg')
         # sim.units = ('yr', 'AU', 'Msun')
-        sim.integrator = "leapfrog"
+        # sim.integrator = "leapfrog"
         sim.add(self.get_particles())
         # op = rebound.OrbitPlot(sim)
         # op.fig.savefig("orbit3.png")
@@ -46,7 +46,7 @@ class Setting:
         return Setting(*new_planets, g=self.g, step=self.step, scaled=self.scaled, centered=self.centered, g_removed=self.g_removed, step_removed=self.step_removed)
 
 
-    def get_vector(self, reduction_type="none", vector_type="m_pos_vel"):
+    def get_vector(self, reduction_type="none", vector_type="m_pos_vel", normalization="minmax"):
         # will return the input vector with the maximum dimensional reduction
         match reduction_type:
             case "none":
@@ -72,12 +72,12 @@ class Setting:
                 vector = np.concatenate((vector, self.planets[0].vel))
                 for planet in self.planets[2:]:
                     vector = np.concatenate((vector, planet.get_vector(vector_type)))
-                return vector
+                return vector/10
             
     def get_vector_pair(self, reduction_type="none", vector_type="m_pos_vel"):
         initial_state = self.get_vector(reduction_type=reduction_type, vector_type=vector_type)
         new_setting = self.simulate()
-        final_state = Setting.planets_to_vector(new_setting.planets)
+        final_state = Setting.planets_to_vector(new_setting.planets, vector_type="m_pos_vel")
         return initial_state, final_state
 
     def get_planets(self):
@@ -263,7 +263,7 @@ class Setting:
             case "full":
                 planets = [Planet.get_random() for i in range(planet_num - 1)]
                 planets[0].pos = np.array([1, 0])
-                mass = 4 * np.random.random()
+                mass = 10 * np.random.random()
 
                 momentum = np.array([0., 0.])
                 position = np.array([0., 0.])
